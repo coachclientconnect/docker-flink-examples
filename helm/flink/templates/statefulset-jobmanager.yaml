@@ -1,47 +1,54 @@
-apiVersion: extensions/v1beta1
-kind: Deployment
+apiVersion: apps/v1
+kind: StatefulSet
 metadata:
-  name: {{ template "fullname" . }}-taskmanager
+  name: {{ template "fullname" . }}-jobmanager
 spec:
-  replicas: {{ .Values.flink.num_taskmanagers }}
+  replicas: {{ .Values.flink.num_jobmanagers }}
   selector:
     matchLabels:
       app: {{ template "fullname" . }}
-      component: taskmanager
+      component: jobmanager
+  serviceName: {{ template "fullname" . }}-jobmanager-headless
   template:
     metadata:
       labels:
         app: {{ template "fullname" . }}
-        component: taskmanager
+        component: jobmanager
     spec:
       containers:
-      - name: taskmanager
+      - name: jobmanager
         image: {{ .Values.image }}:{{ .Values.imageTag }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
         args:
-        - taskmanager
+        - jobmanager
         ports:
-        - name: data
-          containerPort: 6121
-        - name: rpc
-          containerPort: 6122
-        - name: query
-          containerPort: 6125
+        - containerPort: 6123
+          name: rpc
+        - containerPort: 6124
+          name: blob
+        - containerPort: 8081
+          name: ui
         env:
         - name: FLINK_CONF_DIR
           value: /etc/flink
-{{- if .Values.taskmanager.extraEnv }}
-{{ toYaml .Values.taskmanager.extraEnv | indent 8 }}
-{{ end }}
+{{ if .Values.jobmanager.extraEnv }}
+{{ toYaml .Values.jobmanager.extraEnv | indent 8 }}
+{{ end }} 
+        livenessProbe:
+          httpGet:
+            path: /overview
+            port: 8081
+          initialDelaySeconds: 30
+          periodSeconds: 10
         resources:
-{{ toYaml .Values.taskmanager.resources | indent 10 }}
+{{ toYaml .Values.jobmanager.resources | indent 10 }}
         volumeMounts:
         - name: {{ template "fullname" . }}-flink-config
           mountPath: /etc/flink
         - name: {{ template "fullname" . }}-hadoop-config
-          mountPath: /etc/hadoop/conf          
-{{ if .Values.taskmanager.extraVolumeMounts }}
-{{ toYaml .Values.taskmanager.extraVolumeMounts | indent 8 }}
+          mountPath: /etc/hadoop/conf
+{{ if .Values.jobmanager.extraVolumeMounts }}
+{{ toYaml .Values.jobmanager.extraVolumeMounts | indent 6 }}
 {{ end }}      
 {{ if .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -54,6 +61,6 @@ spec:
       - name: {{ template "fullname" . }}-hadoop-config
         configMap:
           name: {{ template "fullname" . }}-hadoop-config
-{{ if .Values.taskmanager.extraVolumes }}
-{{ toYaml .Values.taskmanager.extraVolumes | indent 6 }}
+{{ if .Values.jobmanager.extraVolumes }}
+{{ toYaml .Values.jobmanager.extraVolumes | indent 6 }}
 {{ end }}

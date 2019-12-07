@@ -5,6 +5,10 @@ metadata:
   labels:
     app: {{ template "fullname" . }}
 data:
+  masters: | 
+{{- range $i := until (.Values.flink.num_jobmanagers | int) }}
+    {{ template "fullname" $ }}-jobmanager-{{ $i }}.{{ template "fullname" $ }}-jobmanager-headless
+{{- end }}
   flink-conf.yaml: |
     blob.server.port: 6124
     jobmanager.rpc.address: {{ template "fullname" . }}-jobmanager

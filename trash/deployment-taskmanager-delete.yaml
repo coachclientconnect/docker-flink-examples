@@ -4,10 +4,6 @@ metadata:
   name: {{ template "fullname" . }}-taskmanager
 spec:
   replicas: {{ .Values.flink.num_taskmanagers }}
-  selector:
-    matchLabels:
-      app: {{ template "fullname" . }}
-      component: taskmanager
   template:
     metadata:
       labels:
@@ -30,30 +26,22 @@ spec:
         env:
         - name: FLINK_CONF_DIR
           value: /etc/flink
-{{- if .Values.taskmanager.extraEnv }}
-{{ toYaml .Values.taskmanager.extraEnv | indent 8 }}
-{{ end }}
         resources:
-{{ toYaml .Values.taskmanager.resources | indent 10 }}
+          limits:
+            cpu: {{ .Values.flink.num_slots_per_taskmanager }}
+            memory: {{ .Values.resources.taskmanager.limits.memory }}
+          requests:
+            cpu: {{ .Values.flink.num_slots_per_taskmanager }}
+            memory: {{ .Values.resources.taskmanager.requests.memory }}
         volumeMounts:
         - name: {{ template "fullname" . }}-flink-config
           mountPath: /etc/flink
         - name: {{ template "fullname" . }}-hadoop-config
-          mountPath: /etc/hadoop/conf          
-{{ if .Values.taskmanager.extraVolumeMounts }}
-{{ toYaml .Values.taskmanager.extraVolumeMounts | indent 8 }}
-{{ end }}      
-{{ if .Values.imagePullSecrets }}
-      imagePullSecrets:
-{{ toYaml .Values.imagePullSecrets | indent 6 }}
-{{ end }}
+          mountPath: /etc/hadoop/conf
       volumes:
-      - name: {{ template "fullname" . }}-flink-config
-        configMap:
-          name: {{ template "fullname" . }}-flink-config
-      - name: {{ template "fullname" . }}-hadoop-config
-        configMap:
-          name: {{ template "fullname" . }}-hadoop-config
-{{ if .Values.taskmanager.extraVolumes }}
-{{ toYaml .Values.taskmanager.extraVolumes | indent 6 }}
-{{ end }}
+        - name: {{ template "fullname" . }}-flink-config
+          configMap:
+            name: {{ template "fullname" . }}-flink-config
+        - name: {{ template "fullname" . }}-hadoop-config
+          configMap:
+            name: {{ template "fullname" . }}-hadoop-config
