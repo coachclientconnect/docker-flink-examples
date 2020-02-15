@@ -28,6 +28,10 @@ spec:
           name: blob
         - containerPort: 8081
           name: ui
+{{- if .Values.jobmanager.haPort }}
+        - containerPort: {{ .Values.jobmanager.haPort }}
+          name: ha
+{{- end }}          
         env:
         - name: FLINK_CONF_DIR
           value: /etc/flink
@@ -48,7 +52,7 @@ spec:
         - name: {{ template "fullname" . }}-hadoop-config
           mountPath: /etc/hadoop/conf
 {{ if .Values.jobmanager.extraVolumeMounts }}
-{{ toYaml .Values.jobmanager.extraVolumeMounts | indent 6 }}
+{{ toYaml .Values.jobmanager.extraVolumeMounts | indent 8 }}
 {{ end }}      
 {{ if .Values.imagePullSecrets }}
       imagePullSecrets:

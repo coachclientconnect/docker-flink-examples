@@ -7,6 +7,7 @@ jobmanager:
   resources: {}
   extraVolumes: {}
   extraVolumeMounts: {}
+  haPort: null
 
 taskmanager:
   resources: {}

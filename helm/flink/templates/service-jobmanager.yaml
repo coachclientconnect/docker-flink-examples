@@ -10,6 +10,10 @@ spec:
     port: 6124
   - name: ui
     port: 8081
+{{- if .Values.jobmanager.haPort }}
+  - name: ha
+    port: {{ .Values.jobmanager.haPort }}
+{{- end }}
   selector:
     app: {{ template "fullname" . }}
     component: jobmanager
